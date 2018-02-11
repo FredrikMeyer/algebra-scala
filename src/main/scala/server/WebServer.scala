@@ -26,7 +26,7 @@ object WebServer {
     val config = ConfigFactory.load()
     val port = config.getInt("http.port")
 
-    Http().bindAndHandle(route, "localhost", port)
+    Http().bindAndHandle(route, "0.0.0.0", port)
 
     println(s"Server started at localhost:$port")
 
