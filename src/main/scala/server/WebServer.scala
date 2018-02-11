@@ -4,32 +4,33 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.HttpApp
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 
-import scala.io.StdIn
+object WebServer {
 
-object WebServer extends App {
+  def main(args: Array[String]) {
+    implicit val actorSystem: ActorSystem = ActorSystem("system")
+    implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-  implicit val system = ActorSystem("my-system")
-  implicit val materializer = ActorMaterializer()
-
-  implicit val executionContext = system.dispatcher
-
-  val route =
-    path("") {
-      get {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Her kommer algebra :)</h1>"))
+    val route =
+      pathSingleSlash {
+        get {
+          complete {
+            "Her kommer det matematikk :)"
+          }
+        }
       }
-    }
 
-  val config = ConfigFactory.load()
-  val port = config.getInt("http.port")
+    val config = ConfigFactory.load()
+    val port = config.getInt("http.port")
 
-  val bindingFuture = Http().bindAndHandle(route, "localhost", port)
+    Http().bindAndHandle(route, "localhost", port)
 
-  println(s"Server online at http://localhost:$port")
-  bindingFuture
-    .flatMap(_.unbind()) // trigger unbinding from the port
-    .onComplete(_ => system.terminate()) // and shutdown when done
+    println(s"Server started at localhost:$port")
+
+  }
+
+
 }
