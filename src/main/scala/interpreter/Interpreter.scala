@@ -1,7 +1,5 @@
 package interpreter
 
-import scala.collection.mutable.ListBuffer
-
 abstract class Token() {
 
 }

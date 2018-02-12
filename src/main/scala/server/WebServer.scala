@@ -1,36 +1,44 @@
 package server
 
 import akka.actor.ActorSystem
+import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.HttpApp
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
+import java.nio.file.{Files, Path, Paths}
 
-object WebServer {
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.Route
 
-  def main(args: Array[String]) {
-    implicit val actorSystem: ActorSystem = ActorSystem("system")
-    implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
-    val route =
-      pathSingleSlash {
-        get {
-          complete {
-            "Her kommer det matematikk :)"
-          }
-        }
-      }
+object routes {
 
-    val config = ConfigFactory.load()
-    val port = config.getInt("http.port")
+  val workingDirectory: String = System.getProperty("user.dir")
 
-    Http().bindAndHandle(route, "0.0.0.0", port)
 
-    println(s"Server started at localhost:$port")
-
+  private def getDefaultPage: Route = {
+    getFromResource("web/index.html")
   }
 
+  def generate: Route = {
+    path("") {
+      getDefaultPage
+    }
+  }
+}
 
+
+object WebServer extends App {
+  implicit val system: ActorSystem = ActorSystem()
+  implicit val executor: ExecutionContextExecutor = system.dispatcher
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  val config = ConfigFactory.load()
+  val logger = Logging(system, getClass)
+
+  val binder: Future[Http.ServerBinding] = Http(system)
+    .bindAndHandle(routes.generate, config.getString("http.ip"), config.getInt("http.port"))
 }
